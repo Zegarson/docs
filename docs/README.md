@@ -4,9 +4,25 @@
 
 For development purposes there is preconfigured docker container in the root directory of this repo. To use it type:
 
+**Disclaimer:** due to EULA `st-stm32cubeide_1.16.0` cannot be indclueded in this repo thus you need to download it manually from https://www.st.com/en/development-tools/stm32cubeide.html
+
+### Build
+
 ```sh
-docker build -t zegarson-dev .
-docker run -dit -P --name yocto -v ./data:/data:z  zegarson-dev
+docker build -t zegarson-dev:latest -f Dockerfile.base .
+docker build -t zegarson-cube32ide:latest -f Dockerfile.cube .
+```
+
+### Use
+
+```sh
+docker run -it --privileged \
+    -e "DISPLAY" \
+    -e "XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" \
+    -v "$XDG_RUNTIME_DIR:$XDG_RUNTIME_DIR" \
+    -v "/tmp/.X11-unix:/tmp/.X11-unix" \
+    -v ~/:/home/dev/:z \
+    zegarson-cube32ide
 ```
 
 ## Boot chain
