@@ -5,14 +5,26 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LICENSE_ALREADY_ACCEPTED=1
 ENV PATH="${PATH}:/opt/st/stm32cubeide_${STM32CUBEIDE_VERSION}"
 
+RUN mkdir -p /home/dev/bin
+RUN curl https://storage.googleapis.com/git-repo-downloads/repo > /home/dev/bin/repo
+RUN chmod a+x /home/dev/bin/repo
+RUN echo 'export PATH=$PATH:/home/dev/bin' >> ~/.bashrc
+RUN source ~/.bashrc
+
 COPY en.st-stm32cubeide_1.16.0_21983_20240628_1741_amd64.deb_bundle.sh.zip /tmp/stm32cubeide-installer.sh.zip
+
+RUN sudo apt -y install firefox gawk wget git diffstat unzip texinfo gcc-multilib \
+    build-essential chrpath socat cpio python3 python3-pip python3-pexpect xz-utils \
+    debianutils iputils-ping python3-git python3-jinja2 libegl1-mesa libsdl1.2-dev \
+    pylint xterm bsdmainutils libssl-dev libgmp-dev libmpc-dev lz4 zstd git-lfs libusb-1.0-0 \
+    libnss3 libatk-adaptor libgail-common gcc-arm-none-eabi
+
 
 RUN sudo su && unzip -p /tmp/stm32cubeide-installer.sh.zip > /tmp/stm32cubeide-installer.sh
 
 RUN sudo chmod +x /tmp/stm32cubeide-installer.sh
 RUN sudo LICENSE_ALREADY_ACCEPTED=1 DEBIAN_FRONTEND=noninteractive /tmp/stm32cubeide-installer.sh
 
-RUN sudo apt-get -y -f install
-RUN echo ""
+RUN sudo apt -y -f install
 
 CMD ["/bin/bash"]
