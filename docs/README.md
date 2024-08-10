@@ -59,38 +59,6 @@ Every dts file is stored in https://github.com/Zegarson/dts . Repository has str
 - ED178AM368MS - amoled:
   - This driver just does not exist and needs to be written from scratch
 
-## arm-trusted-firmware
-
-### Fetch source
-
-```sh
-git clone https://github.com/STMicroelectronics/arm-trusted-firmware.git
-```
-
-### Add DTS
-
-```sh
-git clone https://github.com/Zegarson/dts
-ln ./dts/ours/tf-a/* ./arm-trusted-firmware/fdts/
-cd arm-trusted-firmware
-```
-
-### Build
-
-#### BL32
-
-```sh
-make CROSS_COMPILE=arm-none-eabi- PLAT=stm32mp1 ARCH=aarch32 ARM_ARCH_MAJOR=7 \
-    AARCH32_SP=sp_min DTB_FILE_NAME=stm32mp157d-zegarson.dtb bl32 dtbs
-```
-
-#### BL2
-
-```sh
-make CROSS_COMPILE=arm-none-eabi- PLAT=stm32mp1 ARCH=aarch32 ARM_ARCH_MAJOR=7 \
-    DTB_FILE_NAME=stm32mp157d-zegarson.dtb STM32MP_SDMMC=1
-```
-
 ## U-boot
 
 ### Bootstrap requirments
@@ -150,6 +118,88 @@ make stm32mp15_trusted_defconfig
 make all
 ```
 
+## arm-trusted-firmware
+
+### Fetch source
+
+```sh
+git clone https://github.com/STMicroelectronics/arm-trusted-firmware.git
+```
+
+### Add DTS
+
+```sh
+git clone https://github.com/Zegarson/dts
+ln ./dts/ours/tf-a/* ./arm-trusted-firmware/fdts/
+cd arm-trusted-firmware
+```
+
+### Build
+
+### Clean (optional)
+
+```
+make clean
+make realclean
+```
+
+#### BL2
+
+```sh
+make CROSS_COMPILE=arm-none-eabi- PLAT=stm32mp1 ARCH=aarch32 ARM_ARCH_MAJOR=7 DEBUG=1 \
+    DTB_FILE_NAME=stm32mp157d-zegarson.dtb STM32MP_SDMMC=1
+```
+
+#### BL32 (FIP old)
+
+```sh
+make CROSS_COMPILE=arm-none-eabi- PLAT=stm32mp1 ARCH=aarch32 ARM_ARCH_MAJOR=7 DEBUG=1 \
+    AARCH32_SP=sp_min DTB_FILE_NAME=stm32mp157d-zegarson.dtb bl32 dtbs
+```
+
+## BL32 (optee-os)
+
+### Fetch source
+
+```sh
+git clone https://github.com/STMicroelectronics/optee_os.git
+```
+
+### Add DTS
+
+```sh
+git clone https://github.com/Zegarson/dts
+ln ./dts/ours/optee-os/* ./optee_os/core/arch/arm/dts/
+cd optee_os
+```
+
+You will also need to modify `/optee_os/core/arch/arm/plat-stm32mp1/conf.mk`:
+
+- Add this line `flavor_dts_file-157D_DK1 = stm32mp157d-dk1.dts` at the beginning of the file among the other mp157 boards.
+- Add `$(flavor_dts_file-157D_ZEGARSON)` to `flavorlist-no_cryp-512M` and `flavorlist-MP15` lists
+
+### Build
+
+Rename binaries. I am not sure why but this step is required on Fedora 40 linux:
+
+```sh
+sudo dnf install python3-pyelftools
+sudo ln -s /usr/bin/arm-none-eabi-gcc /usr/bin/arm-linux-gnueabihf-gcc
+sudo ln -s /usr/bin/arm-none-eabi-objcopy /usr/bin/arm-linux-gnueabihf-objcopy
+sudo ln -s /usr/bin/arm-none-eabi-cpp /usr/bin/arm-linux-gnueabihf-cpp
+sudo ln -s /usr/bin/arm-none-eabi-ar /usr/bin/arm-linux-gnueabihf-ar
+sudo ln -s /usr/bin/arm-none-eabi-ld /usr/bin/arm-linux-gnueabihf-ld
+sudo ln -s /usr/bin/arm-none-eabi-ld.bfd /usr/bin/arm-linux-gnueabihf-ld.bfd
+sudo ln -s /usr/bin/arm-none-eabi-objdump /usr/bin/arm-linux-gnueabihf-objdump
+sudo ln -s /usr/bin/arm-none-eabi-nm /usr/bin/arm-linux-gnueabihf-nm
+```
+
+```sh
+make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm PLATFORM=stm32mp1 DEBUG=1 \
+    CFG_TEE_CORE_LOG_LEVEL=4 \
+    CFG_EMBED_DTB_SOURCE_FILE=stm32mp157d-zegarson.dts
+```
+
 ## Generating FIP image bundle
 
 In arm-trusted firmware directory:
@@ -159,9 +209,12 @@ cd arm-trusted-firmware
 
 export DEVICE_TREE=stm32mp157d-zegarson
 export CROSS_COMPILE=arm-none-eabi-
-export LOG_LEVEL=40
+```
 
-make CROSS_COMPILE=arm-none-eabi- LOG_LEVEL=40 DEBUG=1 EARLY_CONSOLE=1 \
+### SP_MIN fip
+
+```sh
+make CROSS_COMPILE=arm-none-eabi- DEBUG=1 EARLY_CONSOLE=1 \
     PLAT=stm32mp1 ARCH=aarch32 ARM_ARCH_MAJOR=7 \
     AARCH32_SP=sp_min \
     DTB_FILE_NAME=stm32mp157d-zegarson.dtb \
@@ -170,10 +223,27 @@ make CROSS_COMPILE=arm-none-eabi- LOG_LEVEL=40 DEBUG=1 EARLY_CONSOLE=1 \
     fip
 ```
 
+### OPTEE-OS fip
+
+```sh
+make CROSS_COMPILE=arm-none-eabi- DEBUG=1 EARLY_CONSOLE=1 \
+    PLAT=stm32mp1 ARCH=aarch32 ARM_ARCH_MAJOR=7 \
+    AARCH32_SP=optee \
+    DTB_FILE_NAME=stm32mp157d-zegarson.dtb \
+    BL33=../u-boot/u-boot-nodtb.bin \
+    BL33_CFG=../u-boot/u-boot.dtb \
+    BL32=../optee_os/out/arm-plat-stm32mp1/core/tee-header_v2.bin \
+    BL32_EXTRA1=../optee_os/out/arm-plat-stm32mp1/core/tee-pager_v2.bin \
+    BL32_EXTRA2=../optee_os/out/arm-plat-stm32mp1/core/tee-pageable_v2.bin \
+    fip
+```
+
+### Resulting files
+
 **Resulting files will be located in**:
 
 - `arm-trusted-firmware/build/stm32mp1/debug/fip.bin`
-- `arm-trusted-firmware/build/stm32mp1/release/tf-a-stm32mp157d-zegarson.stm32`
+- `arm-trusted-firmware/build/stm32mp1/debug/tf-a-stm32mp157d-zegarson.stm32`
 
 ## Scripts
 
