@@ -175,27 +175,13 @@ cd optee_os
 
 You will also need to modify `/optee_os/core/arch/arm/plat-stm32mp1/conf.mk`:
 
-- Add this line `flavor_dts_file-157D_DK1 = stm32mp157d-dk1.dts` at the beginning of the file among the other mp157 boards.
+- Add this line `flavor_dts_file-157D_ZEGARSON = stm32mp157d-zegarson.dts` at the beginning of the file among the other mp157 boards.
 - Add `$(flavor_dts_file-157D_ZEGARSON)` to `flavorlist-no_cryp-512M` and `flavorlist-MP15` lists
 
 ### Build
 
-Rename binaries. I am not sure why but this step is required on Fedora 40 linux:
-
 ```sh
-sudo dnf install python3-pyelftools
-sudo ln -s /usr/bin/arm-none-eabi-gcc /usr/bin/arm-linux-gnueabihf-gcc
-sudo ln -s /usr/bin/arm-none-eabi-objcopy /usr/bin/arm-linux-gnueabihf-objcopy
-sudo ln -s /usr/bin/arm-none-eabi-cpp /usr/bin/arm-linux-gnueabihf-cpp
-sudo ln -s /usr/bin/arm-none-eabi-ar /usr/bin/arm-linux-gnueabihf-ar
-sudo ln -s /usr/bin/arm-none-eabi-ld /usr/bin/arm-linux-gnueabihf-ld
-sudo ln -s /usr/bin/arm-none-eabi-ld.bfd /usr/bin/arm-linux-gnueabihf-ld.bfd
-sudo ln -s /usr/bin/arm-none-eabi-objdump /usr/bin/arm-linux-gnueabihf-objdump
-sudo ln -s /usr/bin/arm-none-eabi-nm /usr/bin/arm-linux-gnueabihf-nm
-```
-
-```sh
-make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm PLATFORM=stm32mp1 DEBUG=1 \
+make CROSS_COMPILE=arm-none-eabi- ARCH=arm PLATFORM=stm32mp1 DEBUG=1 \
     CFG_TEE_CORE_LOG_LEVEL=4 \
     CFG_EMBED_DTB_SOURCE_FILE=stm32mp157d-zegarson.dts
 ```
