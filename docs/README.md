@@ -99,6 +99,9 @@ git clone https://github.com/STMicroelectronics/u-boot.git
 
 ```sh
 git clone https://github.com/Zegarson/dts
+rm ./u-boot/arch/arm/dts/stm32mp157d-zegarson.dts
+rm ./u-boot/arch/arm/dts/stm32mp157d-zegarson-scmi.dtsi
+rm ./u-boot/arch/arm/dts/stm32mp157d-zegarson-u-boot.dtsi
 ln ./dts/ours/u-boot/* ./u-boot/arch/arm/dts/
 cd u-boot
 ```
@@ -130,6 +133,9 @@ git clone https://github.com/STMicroelectronics/arm-trusted-firmware.git
 
 ```sh
 git clone https://github.com/Zegarson/dts
+rm ./arm-trusted-firmware/fdts/stm32mp157d-zegarson.dts
+rm ./arm-trusted-firmware/fdts/stm32mp157d-zegarson-fw-config.dts
+rm ./arm-trusted-firmware/fdts/stm32mp15-mx.dtsi
 ln ./dts/ours/tf-a/* ./arm-trusted-firmware/fdts/
 cd arm-trusted-firmware
 ```
@@ -169,6 +175,7 @@ git clone https://github.com/STMicroelectronics/optee_os.git
 
 ```sh
 git clone https://github.com/Zegarson/dts
+rm ./optee_os/core/arch/arm/dts/stm32mp157d-zegarson.dts
 ln ./dts/ours/optee-os/* ./optee_os/core/arch/arm/dts/
 cd optee_os
 ```
