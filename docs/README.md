@@ -117,7 +117,7 @@ export DEVICE_TREE=stm32mp157d-zegarson
 export CROSS_COMPILE=arm-none-eabi-
 
 rm -rf build
-make stm32mp15_trusted_defconfig
+make stm32mp15_defconfig
 make all
 ```
 
@@ -189,7 +189,7 @@ You will also need to modify `/optee_os/core/arch/arm/plat-stm32mp1/conf.mk`:
 
 ```sh
 make CROSS_COMPILE=arm-none-eabi- ARCH=arm PLATFORM=stm32mp1 DEBUG=1 \
-    CFG_TEE_CORE_LOG_LEVEL=4 \
+    CFG_TEE_CORE_LOG_LEVEL=3 \
     CFG_EMBED_DTB_SOURCE_FILE=stm32mp157d-zegarson.dts
 ```
 
