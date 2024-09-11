@@ -1,41 +1,57 @@
-# Dev enviorment
+# Development Environment Setup
 
 ## Windows
 
-Building on Windows can be problematic. You can use MSYS2 to provide `make`, `dd`, and other utilities, but there is no guarantee that all commands will work correctly. Even if a command runs on Windows, due to various differences and patches, it may produce different results and break the build. It is highly advisable to use either WSL2 or VirtualBox when working on Windows.
+Building on Windows requires a compatibility layer to simulate a native Linux environment. While MSYS2 can provide essential tools like `make` and `dd`, it is insufficient for completing the full Buildroot build. To properly run Buildroot, install either **WSL2** or set up a **VirtualBox** environment with **Ubuntu 22.04** or newer. This environment will be suitable for the entire development process.
 
-**Disclaimer:** Many of the commands related to Zegarson rely on USB access. By default, Windows isolates USB access from the WSL2 virtual machine. To pass through USB devices, you can use the [wsl-usb-gui tool](https://gitlab.com/alelec/wsl-usb-gui). This will allow devices like JTAG debuggers and UART probes to work out of the box. However, due to the fact that Windows isolates USB by default, Microsoft has disabled USB storage in WSL2. As a result, you will need to build a custom kernel with `USB_STORAGE=y` enabled. After this modification, you should be able to access USB sticks and SD cards from inside the VM.
+Once your environment is set up, follow the Linux build instructions and ensure Docker is installed. Docker is needed for generating the Linux root filesystem. While it's theoretically possible to use only Docker with the provided `Dockerfile` in Docker Desktop, this approach is untested.
 
-## Native linux
+### USB Device Access in WSL2
 
-You can use many up-to-date Linux distributions to build both the OS and the utilities for flashing. The currently tested environments include Fedora 40 and Ubuntu 20.04. If you're not using Yocto, it is perfectly fine to install dependencies directly on your host machine. However, for Yocto builds, you will need Ubuntu 20.04 with a specific list of dependencies, so using a virtual machine or Docker container is recommended.
+Many Zegarson-related commands require access to USB devices like JTAG debuggers and UART probes. Windows isolates USB devices by default, so you’ll need to use the [wsl-usb-gui tool](https://gitlab.com/alelec/wsl-usb-gui) to pass through USB devices to WSL2. However, USB storage is disabled in WSL2 by default. To access USB drives or SD cards, you will need to build a custom kernel with `USB_STORAGE=y` enabled. After applying this modification, USB storage devices should function correctly within the WSL2 environment.
 
-## Docker
+## Native Linux Setup
 
-For development purposes, there is a preconfigured Docker container in the root directory of this repo. To use it, follow the steps below:
+You can use various up-to-date Linux distributions to build both the OS and flashing utilities. Tested environments include **Fedora 40** and **Ubuntu 20.04**. The current Buildroot configuration, based on Alpine Linux, requires Docker as a dependency. It’s essential to use Docker (not Podman), as the build process relies on `docker run` with the `--privileged` flag, which is incompatible with Podman’s rootless setup.
 
-**Disclaimer:** Due to the End User License Agreement (EULA), the `st-stm32cubeide_1.16.0` software cannot be included in this repo. You need to download it manually from [STMicroelectronics STM32CubeIDE](https://www.st.com/en/development-tools/stm32cubeide.html). Alternatively, you can ignore the second image and only use the `zegarson-dev` container without STM32CubeIDE.
-
-### Build
+For Ubuntu users, you can install most required dependencies using the following command:
 
 ```sh
-docker build -t zegarson-dev:latest -f Dockerfile.base .
-docker build -t zegarson-cube32ide:latest -f Dockerfile.cube .
+# Buildroot dependencies
+sudo apt install sed make debianutils binutils build-essential diffutils gcc g++ patch gzip bzip2 perl tar cpio unzip rsync file bc findutils python3 libssl-dev
+
+# Development tools and utilities
+sudo apt install sudo wget curl neofetch git bash nano locales ca-certificates
 ```
 
-### Usage
+To install docker just follow [Official Documentation](https://docs.docker.com/engine/install/ubuntu/)
+
+For additional details, refer to the [Buildroot Prerequisites](https://buildroot.org/downloads/manual/prerequisite.txt) documentation.
+
+## Docker as a Development Environment
+
+In addition to generating the Alpine root filesystem, Docker can be used as an isolated build environment. To set up Docker for development, first clone the `buildroot-external` repository and navigate to its main directory:
 
 ```sh
-docker run -it \
-    -e "DISPLAY" \
-    -e "XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" \
-    -v "$XDG_RUNTIME_DIR:$XDG_RUNTIME_DIR" \
-    -v "/tmp/.X11-unix:/tmp/.X11-unix" \
-    -v "./:/home/dev/zegarson" \
-    zegarson-cube32ide
+git clone https://github.com/Zegarson/buildroot-external.git
+cd buildroot-external
 ```
 
-### Notes:
+You’ll find two important files in this directory:
 
-- Ensure that the STM32CubeIDE is properly installed on your system before running the `zegarson-cube32ide` container.
-- The `$(pwd)` command dynamically links the current directory to the container.
+- **Dockerfile**: A recipe for an **Ubuntu 20.04**-based environment with all necessary dependencies, including Docker CLI.
+- **compose.yml**: This file defines how to run the environment and mount necessary files. You may need to tweak default paths in `compose.yml` to match your system's directory structure.
+
+To build and enter the Docker environment, run the following commands:
+
+```sh
+docker-compose build
+docker-compose up -d
+docker-compose exec ubuntu-buildroot bash
+```
+
+After running the last command, you’ll be inside a partially isolated development environment. When you're finished, exit the shell and shut down the environment by running:
+
+```sh
+docker-compose down
+```

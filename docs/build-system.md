@@ -26,28 +26,39 @@ sudo apt install debianutils sed make binutils build-essential gcc g++ bash patc
 
 After installing the dependencies, navigate to the `buildroot` folder, specify the `buildroot-external` path, and initialize the build. You can select one of the three targets currently supported by the Zegarson project:
 
-- `qemu_arm_versatile_defconfig` (unstable)
-- `stm32mp157d_zegarson_defconfig`
-- `stm32mp157d_zegarson_mini_defconfig`
+- `qemu_x86_64_alpine_defconfig`
+- `zegarson_alpine_defconfig`
 
 ```sh
 cd buildroot
-make BR2_EXTERNAL=../buildroot-external stm32mp157d_zegarson_mini_defconfig
+make BR2_EXTERNAL=../buildroot-external zegarson_alpine_defconfig
 ```
 
 This command will generate the configuration files for the build. If you wish, you can modify them using `menuconfig`. Finally, execute the `make` command to start the build:
 
 ```sh
-make
+make -j`nproc`
 ```
 
 Due to the size of the Buildroot project, the build will take around 30-40 minutes, depending on your hardware and internet speed. This process takes longer because the current configuration does not use CCACHE or multithreading, due to issues with stability and consistency. All the files needed for the flashing steps will be located in the `buildroot/output/images` folder.
 
 If you want to build everything from scratch, run `make clean`. If you want to rebuild only a specific component, remove the appropriate folder from the `/buildroot/output/build/` directory. Since Buildroot does not reliably implement change detection, you will need to do this every time you modify files like DTS or overlays.
 
-## Yocto
+### Tips
 
-Currently, all builds are done using Buildroot due to its ease of modification. Although Buildroot is not officially supported by ST, it works well enough to be used for current releases. Yocto support is planned for future builds once the Linux configurations and DTS files have matured.
+If you are running multiple builds for example qemu for testing purposes and zegarson as an production build you can prefix them with `O=` to avoid unnecesary downloads and cleans. To achive this insted of earlier commands run:
+
+```sh
+cd buildroot
+
+mkdir qemu_x86_64
+make O=qemu_x86_64 BR2_EXTERNAL=../buildroot-external qemu_x86_64_alpine_defconfig
+make O=qemu_x86_64 -j`nproc`
+
+mkdir zegarson
+make O=zegarson BR2_EXTERNAL=../buildroot-external zegarson_alpine_defconfig
+make O=zegarson -j`nproc`
+```
 
 ## Manual
 
